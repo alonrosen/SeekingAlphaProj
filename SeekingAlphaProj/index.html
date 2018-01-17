@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Seeking Alpha</title>
+</head>
+<body>
+    <input type="text" id="curruser" placeholder="Select user id for operations" />
+    <button type="button" id="createcookie">Change user!</button>
+    <br/>
+    <div id="placeholder">
+        <p>No user logged in</p>
+    </div>
+    <div id="table">
+        <h2 id="welcome"></h2>
+        <table id="userList" >
+            <thead>
+                <th>User Name</th>
+                <th>Group Name</th>
+                <th>Followers</th>
+                <th>Follow/UnFollow</th>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+   
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        $("#createcookie").click(function () {
+            setCookie("userid", $('#curruser').val());
+            get_user_name($('#curruser').val());
+            refreshList();
+        });
+
+        $(document).ready(function () {
+            var ck = getCookie("userid");
+            $("#placeholder").hide();
+            $("#table").hide();
+        if (ck != null) {
+            $("#table").show();
+            $("#curruser").val(ck);
+            get_user_name(ck);
+            refreshList();
+        } else {
+            $("#placeholder").show();
+        }
+      
+        });
+
+        function setCookie(key, value) {
+            var expires = new Date();
+            expires.setTime(expires.getTime() + (1 * 24 * 60 * 60 * 1000));
+            document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+        }
+
+        function getCookie(key) {
+            var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+            return keyValue ? keyValue[2] : null;
+        }
+
+        function follow_action(uid, action) {
+            $.ajax
+                ({
+                    type: "POST",
+                    url: '/api/UserList',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({"uid": uid, "action" : action}),
+                    success: function () {
+                        refreshList();
+                    }
+                })
+        }
+
+        function get_user_name(uid) {
+            $.ajax
+                ({
+                    type: "get",
+                    url: '/api/UserList/' + uid,
+                    dataType: 'text',
+                    success: function (data) {
+                        if (data && data.length > 0) {
+                            data = $.parseJSON(data); 
+                            var uname = data.Name;
+                            $("#welcome").text(uname);
+                        }
+                    }
+                })
+        }
+
+        function refreshList() {
+            var uri = '/api/UserList';
+            $("#userList > tbody > tr").remove();
+            $.getJSON(uri)
+            .done(function (data) {
+                $.each(data, function (key, item) {
+                    var btnText = item.Following ? "UnFollow" : "Follow";
+                    var postAction = item.Following ? "U" : "F";
+                    $("#userList > tbody").append("<tr><td>" + item.Name + "</td><td>" + item.Group + "</td><td>" + item.Followers + "</td><td><button type=\"button\" id=\"" + btnText + "\" onclick=\"follow_action(" + item.Id + ",'" + postAction + "')\">" + btnText + "</button></td></tr>");
+                });
+            });
+    }
+
+
+    </script>
+</body>
+</html>
