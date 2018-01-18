@@ -33,6 +33,8 @@
             setCookie("userid", $('#curruser').val());
             get_user_name($('#curruser').val());
             refreshList();
+            $("#placeholder").hide();
+            $("#table").show();
         });
 
         $(document).ready(function () {
